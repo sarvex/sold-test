@@ -60,8 +60,8 @@ def test(arg=None):
         def say(*x):
             pass
     say("Start Pool testing")
-    print("oneTBB version is %s" % runtime_version())
-    print("oneTBB interface version is %s" % runtime_interface_version())
+    print(f"oneTBB version is {runtime_version()}")
+    print(f"oneTBB interface version is {runtime_interface_version()}")
 
     get_tid = lambda: threading.current_thread().ident
 
@@ -89,11 +89,11 @@ def test(arg=None):
     assert pool.map(return42, []) == []
     assert pool.apply_async(return42, []).get() == 42
     assert pool.apply(return42, []) == 42
-    assert list(pool.imap(return42, iter([]))) == []
-    assert list(pool.imap_unordered(return42, iter([]))) == []
+    assert not list(pool.imap(return42, iter([])))
+    assert not list(pool.imap_unordered(return42, iter([])))
     assert pool.map_async(return42, []).get() == []
-    assert list(pool.imap_async(return42, iter([])).get()) == []
-    assert list(pool.imap_unordered_async(return42, iter([])).get()) == []
+    assert not list(pool.imap_async(return42, iter([])).get())
+    assert not list(pool.imap_unordered_async(return42, iter([])).get())
 
     # basic tests
     result = pool.apply_async(f, (10,))  # evaluate "f(10)" asynchronously
@@ -115,7 +115,7 @@ def test(arg=None):
     assert result.get() is None  # sleep() returns None
 
     def cb(s):
-        say("Result ready: %s" % s)
+        say(f"Result ready: {s}")
 
     # Test imap()
     assert list(pool.imap(work, range(10, 3, -1), chunksize=4)) == list(map(

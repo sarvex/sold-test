@@ -61,7 +61,9 @@ def _test(arg=None):
     import platform
     if platform.system() == "Linux":
         ctypes.CDLL(libirml)
-        assert 256 == os.system("ldd "+_api.__file__+"| grep -E 'libimf|libsvml|libintlc'") # nosec
+        assert 256 == os.system(
+            f"ldd {_api.__file__}| grep -E 'libimf|libsvml|libintlc'"
+        )
     from .test import test
     test(arg)
     print("done")
@@ -86,7 +88,7 @@ class TBBProcessPool27(multiprocessing.pool.Pool):
         """
         from multiprocessing.util import debug
 
-        for i in range(self._processes - len(self._pool)):
+        for _ in range(self._processes - len(self._pool)):
             w = self.Process(target=tbb_process_pool_worker27,
                              args=(self._inqueue, self._outqueue,
                                    self._initializer,
@@ -128,7 +130,7 @@ class TBBProcessPool3(multiprocessing.pool.Pool):
         """
         from multiprocessing.util import debug
 
-        for i in range(self._processes - len(self._pool)):
+        for _ in range(self._processes - len(self._pool)):
             w = self.Process(target=tbb_process_pool_worker3,
                              args=(self._inqueue, self._outqueue,
                                    self._initializer,
@@ -185,10 +187,10 @@ class Monkey:
     def _patch(self, class_name, module_name, obj):
         m = self._modules[class_name] = __import__(module_name, globals(),
                                                    locals(), [class_name])
-        if m == None:
+        if m is None:
             return
         oldattr = getattr(m, class_name, None)
-        if oldattr == None:
+        if oldattr is None:
             self._modules[class_name] = None
             return
         self._items[class_name] = oldattr
@@ -324,10 +326,9 @@ def _main():
         init_sem_name()
     if not os.environ.get("KMP_BLOCKTIME"): # TODO move
         os.environ["KMP_BLOCKTIME"] = "0"
-    if '_' + args.name in globals():
-        return globals()['_' + args.name](*args.args)
-    else:
-        import runpy
-        runf = runpy.run_module if args.module else runpy.run_path
-        with Monkey(max_num_threads=args.max_num_threads, benchmark=args.benchmark):
-            runf(args.name, run_name='__main__')
+    if f'_{args.name}' in globals():
+        return globals()[f'_{args.name}'](*args.args)
+    import runpy
+    runf = runpy.run_module if args.module else runpy.run_path
+    with Monkey(max_num_threads=args.max_num_threads, benchmark=args.benchmark):
+        runf(args.name, run_name='__main__')

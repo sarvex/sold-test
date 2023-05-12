@@ -26,7 +26,7 @@ BUILD_TYPE = os.getenv("BUILD_TYPE")
 # -- Project information -----------------------------------------------------
 
 
-if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
+if BUILD_TYPE in ['oneapi', 'dita']:
     project = u'Intel® oneAPI Threading Building Blocks (oneTBB)'
 else:
     project = u'oneAPI Threading Building Blocks (oneTBB)'
@@ -93,7 +93,7 @@ pygments_style = None
 highlight_language = 'cpp' 
 
 
-if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
+if BUILD_TYPE in ['oneapi', 'dita']:
     rst_prolog = """
 .. |full_name| replace:: Intel\ |reg|\  oneAPI Threading Building Blocks (oneTBB)
 .. |short_name| replace:: oneTBB
@@ -103,6 +103,7 @@ if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
 .. |base_tk| replace:: Intel\ |reg|\  oneAPI Base Toolkit
 .. |dpcpp| replace:: Intel\ |reg|\  oneAPI DPC++/C++ Compiler
     """
+    html_theme = 'sphinx_rtd_theme'
 else:
     rst_prolog = """
 .. |full_name| replace:: oneAPI Threading Building Blocks (oneTBB)
@@ -115,18 +116,6 @@ else:
     """
 
 
-# -- Options for HTML output -------------------------------------------------
-
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-#
-if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
-    html_theme = 'sphinx_rtd_theme'
-else:
     html_theme = 'sphinx_book_theme'
     html_theme_options = {
     'repository_url': 'https://github.com/oneapi-src/oneTBB',
@@ -142,7 +131,7 @@ else:
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-if BUILD_TYPE == 'oneapi'  or BUILD_TYPE == 'dita':
+if BUILD_TYPE in ['oneapi', 'dita']:
     html_context = {
         'css_files': [
             '_static/theme_overrides.css',  # override wide tables in RTD theme
@@ -151,7 +140,7 @@ if BUILD_TYPE == 'oneapi'  or BUILD_TYPE == 'dita':
 else:
     html_js_files = ['custom.js']
     html_logo = '_static/oneAPI-rgb-rev-100.png'
-    
+
 html_favicon = '_static/favicons.png'
 
 

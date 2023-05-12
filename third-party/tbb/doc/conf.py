@@ -25,7 +25,7 @@ BUILD_TYPE = os.getenv("BUILD_TYPE")
 
 # -- Project information -----------------------------------------------------
 
-if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
+if BUILD_TYPE in ['oneapi', 'dita']:
     project = u'Intel® oneAPI Threading Building Blocks (oneTBB)'
 else:
     project = u'oneTBB'
@@ -90,7 +90,7 @@ pygments_style = None
 # Syntax highlighting for the :: directive
 highlight_language = 'cpp' 
 
-if BUILD_TYPE == 'oneapi' or BUILD_TYPE == 'dita':
+if BUILD_TYPE in ['oneapi', 'dita']:
     rst_prolog = """
 .. |full_name| replace:: Intel\ |reg|\  oneAPI Threading Building Blocks (oneTBB)
 .. |short_name| replace:: oneTBB
@@ -145,7 +145,7 @@ else:
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-if BUILD_TYPE == 'oneapi'  or BUILD_TYPE == 'dita':
+if BUILD_TYPE in ['oneapi', 'dita']:
     html_context = {
         'css_files': [
             '_static/theme_overrides.css',  # override wide tables in RTD theme
@@ -154,7 +154,7 @@ if BUILD_TYPE == 'oneapi'  or BUILD_TYPE == 'dita':
 else:
     html_js_files = ['custom.js']
 
-    
+
 html_logo = '_static/oneAPI-rgb-rev-100.png'
 html_favicon = '_static/favicons.png'
 

@@ -63,9 +63,9 @@ class PartialPreprocessor(object):
         ELIF_GROUP = r"(?P<elif>el)?"
         OP_GROUP = r"(?P<op>&&|\|\|)?"
 
-        self._defs = {macro:value for macro, value in defs}
-        self._replaces = {macro:value for macro, value in replaces}
-        self._defs.update(self._replaces)
+        self._defs = dict(defs)
+        self._replaces = dict(replaces)
+        self._defs |= self._replaces
         self._undefs = set(undefs)
 
         self._define = re.compile(r"\s*#\s*define")
@@ -142,7 +142,7 @@ class PartialPreprocessor(object):
         replace = [line[min_spaces:] for line in replace]
 
         if all_pound:
-            replace = ["#" + line for line in replace]
+            replace = [f"#{line}" for line in replace]
 
         return replace
 
@@ -154,11 +154,7 @@ class PartialPreprocessor(object):
         KEEP_ONE = 1
         REMOVE_REST = 2
 
-        if is_true:
-            state = KEEP_ONE
-        else:
-            state = REMOVE_ONE
-
+        state = KEEP_ONE if is_true else REMOVE_ONE
         line = self._inlines[idx]
         is_if = self._if.match(line) is not None
         assert is_if or self._elif.match(line) is not None
@@ -283,7 +279,7 @@ class PartialPreprocessor(object):
             macro = groups['macro']
             op = groups.get('op')
 
-            if not (macro in self._defs or macro in self._undefs):
+            if macro not in self._defs and macro not in self._undefs:
                 outlines.append(line)
                 idx += 1
                 continue
@@ -304,11 +300,8 @@ class PartialPreprocessor(object):
                 is_int = True
                 try:
                     defined_value = int(defined_value)
-                except TypeError:
+                except (TypeError, ValueError):
                     is_int = False
-                except ValueError:
-                    is_int = False
-
                 resolved = is_int
                 is_true = (defined_value != 0)
 
@@ -347,9 +340,7 @@ class PartialPreprocessor(object):
                     try:
                         defined_value = int(defined_value)
                         value = int(value)
-                    except TypeError:
-                        are_ints = False
-                    except ValueError:
+                    except (TypeError, ValueError):
                         are_ints = False
                     if (
                             macro == macro2 and
@@ -357,18 +348,18 @@ class PartialPreprocessor(object):
                             are_ints
                     ):
                         resolved = True
-                        if cmp == '<':
+                        if cmp == '!=':
+                            is_true = defined_value != value
+                        elif cmp == '<':
                             is_true = defined_value < value
                         elif cmp == '<=':
                             is_true = defined_value <= value
                         elif cmp == '==':
                             is_true = defined_value == value
-                        elif cmp == '!=':
-                            is_true = defined_value != value
-                        elif cmp == '>=':
-                            is_true = defined_value >= value
                         elif cmp == '>':
                             is_true = defined_value > value
+                        elif cmp == '>=':
+                            is_true = defined_value >= value
                         else:
                             resolved = False
 
@@ -453,8 +444,7 @@ class Freestanding(object):
         """
         for root, dirname, filenames in os.walk(self._dst_lib):
             for filename in filenames:
-                filepath = os.path.join(root, filename)
-                yield filepath
+                yield os.path.join(root, filename)
 
     def _log(self, *args, **kwargs):
         print(*args, **kwargs)
@@ -605,9 +595,9 @@ class Freestanding(object):
         delim = sed[1]
         match = re.fullmatch(f's{delim}(.+){delim}(.*){delim}(.*)', sed)
         assert match is not None
-        regex = re.compile(match.group(1))
-        format_str = match.group(2)
-        is_global = match.group(3) == 'g'
+        regex = re.compile(match[1])
+        format_str = match[2]
+        is_global = match[3] == 'g'
         return regex, format_str, is_global
 
     def _process_sed(self, sed):
@@ -721,29 +711,27 @@ def main(name, args):
         external_xxhash = True
         args.rewritten_includes.append(('"(\\.\\./common/)?xxhash.h"', args.xxhash))
 
-    if args.xxh64_prefix is not None:
-        if not external_xxhash:
-            raise RuntimeError("--xxh64-prefix may only be used with --xxhash provided")
+    if args.xxh64_prefix is not None and not external_xxhash:
+        raise RuntimeError("--xxh64-prefix may only be used with --xxhash provided")
 
-    if args.xxh64_state is not None:
-        if not external_xxhash:
-            raise RuntimeError("--xxh64-state may only be used with --xxhash provided")
-
-    Freestanding(
-        args.zstd_deps,
-        args.mem,
-        args.source_lib,
-        args.output_lib,
-        external_xxhash,
-        args.xxh64_state,
-        args.xxh64_prefix,
-        args.rewritten_includes,
-        args.defs,
-        args.replaces,
-        args.undefs,
-        args.excludes,
-        args.seds,
-    ).go()
+    if args.xxh64_state is None or external_xxhash:
+        Freestanding(
+            args.zstd_deps,
+            args.mem,
+            args.source_lib,
+            args.output_lib,
+            external_xxhash,
+            args.xxh64_state,
+            args.xxh64_prefix,
+            args.rewritten_includes,
+            args.defs,
+            args.replaces,
+            args.undefs,
+            args.excludes,
+            args.seds,
+        ).go()
+    else:
+        raise RuntimeError("--xxh64-state may only be used with --xxhash provided")
 
 if __name__ == "__main__":
     main(sys.argv[0], sys.argv[1:])
